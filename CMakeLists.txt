@@ -29,12 +29,16 @@ set(CMAKE_CXX_EXTENSIONS        OFF)
 # =============================================================================
 
 set(RARLIB_HEADERS
+	include/RarLib/Unrar.hpp
 	include/RarLib/Rar.hpp
+	include/RarLib/Wrapper.hpp
 	include/RarLib/OS.hpp
 )
 
 set(RARLIB_SOURCES
+	src/RarLib/Unrar.cpp
 	src/RarLib/Rar.cpp
+	src/RarLib/Wrapper.cpp
 )
 
 # =============================================================================
@@ -73,7 +77,7 @@ endif()
 # Header-only INTERFACE target
 # =============================================================================
 
-# Note: the header-only target requires the user to compile Rar.cpp themselves,
+# Note: the header-only target requires the user to compile *.cpp themselves,
 # or to define RARLIB_HEADER_ONLY and include the implementation manually.
 # It is provided for convenience (e.g. single-file integration).
 

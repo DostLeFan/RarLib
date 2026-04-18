@@ -1,33 +1,15 @@
 #ifndef DEF_RAR
 #define DEF_RAR
 
-#include <ostream>
-#include <filesystem>
-#include <string>
 #include <vector>
+#include "Wrapper.hpp"
 
-enum RarType
-{
-	WINRAR,
-	RAR,
-	EMPTY
-};
-
-struct RarDetectionResult
-{
-	bool found = false;
-	RarType type;
-	std::filesystem::path path;
-};
-
-typedef struct RarDetectionResult RarDetectionResult;
-
-class Rar
+class Rar : public Wrapper
 {
 	public:
 		Rar();
 		Rar(Rar const& src);
-		~Rar();
+		virtual ~Rar() = default;
 		
 		Rar& operator=(Rar const& src);
 		
@@ -36,21 +18,6 @@ class Rar
 		bool compressOneFile(std::string const& filePath, std::string const& archiveName) const;
 		bool compressMultipleFiles(std::vector<std::string> const& files, std::string const& archiveName) const;
 		bool compressDirectory(std::string const& directoryPath, std::string const& archiveName) const;
-		
-		friend std::ostream& operator<<(std::ostream& os, Rar const& src);
-	
-	private:
-		mutable RarDetectionResult m_cachedRar;
-		mutable bool m_rarCached = false;
-		
-		std::filesystem::path resolveArchivePath(std::string const& archiveName) const;
-		bool executeCommandSafe(std::string const& command) const;
-		RarDetectionResult findRarExecutable() const;
-		bool fileExists(std::filesystem::path const& path) const;
-		bool containsUnsafeChars(std::string const& str) const;
-	
-	protected:
-		virtual void write(std::ostream& os) const;
 };
 
 #endif // DEF_RAR

@@ -13,10 +13,14 @@ A lightweight C++ library, written in C++17, to compress files and directories i
 ## Table of Contents
 
 - [Overview](#overview)
+- [Architecture](#architecture)
 - [Requirements](#requirements)
 - [Building from Source](#building-from-source)
 - [Integration via CMake FetchContent](#integration-via-cmake-fetchcontent)
 - [Usage](#usage)
+  - [Compression](#compression)
+  - [Extraction](#extraction)
+  - [Inspection](#inspection)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
@@ -25,10 +29,24 @@ A lightweight C++ library, written in C++17, to compress files and directories i
 
 ## Overview
 
-RarLib is a cross-platform C++17 wrapper around the `rar` / `WinRAR` command-line executable.  
-It automatically detects the RAR binary on the host system and exposes a simple API to compress and decompress files and directories.
+RarLib is a cross-platform C++17 wrapper around the `rar` / `WinRAR` and `unrar` command-line executables.  
+It automatically detects the available RAR binaries on the host system and exposes a simple API to compress, extract, and inspect RAR archives.
 
-> **Note:** RarLib does **not** bundle a RAR binary. The `rar` or `WinRAR` executable must be installed separately on the target machine.
+> **Note:** RarLib does **not** bundle any RAR binary. The `rar`, `WinRAR`, or `unrar` executable must be installed separately on the target machine.
+
+---
+
+## Architecture
+
+RarLib is organized around three classes:
+
+```
+Wrapper        (base class — detection, command execution, shared helpers)
+├── Rar        (compression)
+└── Unrar      (extraction & inspection)
+```
+
+`Wrapper` centralizes binary detection (`rar`, `WinRAR`, `unrar`), path resolution, and safe command execution. `Rar` and `Unrar` each expose only the operations relevant to their role.
 
 ---
 
@@ -47,15 +65,18 @@ It automatically detects the RAR binary on the host system and exposes a simple 
 
 - [CMake](https://cmake.org/) 3.16+
 
-### Runtime Dependency
+### Runtime Dependencies
 
-RarLib requires either `rar` or `WinRAR` to be installed and accessible on the target system:
+| Class | Executable needed | Platform |
+|---|---|---|
+| `Rar` | `rar` or `WinRAR` | All |
+| `Unrar` | `unrar` (preferred) or `rar` / `WinRAR` as fallback | All |
 
 | Platform | Install |
 |---|---|
-| **Linux** | `sudo apt install rar` / `sudo dnf install rar` |
-| **macOS** | `brew install rar` |
-| **Windows** | [WinRAR](https://www.win-rar.com/download.html) — must be installed in the default path or registered in the Windows registry |
+| **Linux** | `sudo apt install rar unrar` / `sudo dnf install rar unrar` |
+| **macOS** | `brew install rar` / `brew install unar` |
+| **Windows** | [WinRAR](https://www.win-rar.com/download.html) — `UnRAR.exe` is included in the WinRAR installation |
 
 ---
 
@@ -63,13 +84,13 @@ RarLib requires either `rar` or `WinRAR` to be installed and accessible on the t
 
 ```bash
 # Clone the repository
-git clone https://github.com/DostLeFan/RarLib.git
+git clone https://github.com/YOUR_USERNAME/RarLib.git
 cd RarLib
 
 # Configure
 cmake -S . -B build \
   -DCMAKE_BUILD_TYPE=Release \
-  -DRАРLIB_INSTALL=ON
+  -DRARLIB_INSTALL=ON
 
 # Build
 cmake --build build --config Release --parallel
@@ -98,8 +119,8 @@ include(FetchContent)
 
 FetchContent_Declare(
     RarLib
-    GIT_REPOSITORY https://github.com/DostLeFan/RarLib.git
-    GIT_TAG        v1.0.0
+    GIT_REPOSITORY https://github.com/YOUR_USERNAME/RarLib.git
+    GIT_TAG        v2.0.0
 )
 
 FetchContent_MakeAvailable(RarLib)
@@ -110,7 +131,7 @@ target_link_libraries(your_target PRIVATE RarLib::RarLib)
 Alternatively, if you installed RarLib system-wide via `cmake --install`, you can use `find_package`:
 
 ```cmake
-find_package(RarLib 1.0.0 REQUIRED)
+find_package(RarLib 2.0.0 REQUIRED)
 target_link_libraries(your_target PRIVATE RarLib::RarLib)
 ```
 
@@ -122,13 +143,17 @@ If you prefer to compile the sources yourself, use the `INTERFACE` target instea
 target_link_libraries(your_target PRIVATE RarLib::HeaderOnly)
 ```
 
-Then add `src/Rar.cpp` to your own build.
+Then add `src/RarLib/Rar.cpp`, `src/RarLib/Unrar.cpp` and `src/RarLib/Wrapper.cpp` to your own build.
 
 ---
 
 ## Usage
 
-### Check if RAR is available
+### Compression
+
+The `Rar` class wraps the `rar` / `WinRAR` executable and exposes three compression methods.
+
+#### Check if RAR is available
 
 ```cpp
 #include <RarLib/Rar.hpp>
@@ -140,16 +165,15 @@ int main()
 
     if (!rar.isRarInstalled())
     {
-        std::cerr << "RAR executable not found. Please install rar or WinRAR.\n";
+        std::cerr << "rar / WinRAR not found. Please install it.\n";
         return 1;
     }
 
-    // Prints type (rar / WinRAR) and path
-    std::cout << rar << "\n";
+    std::cout << rar << "\n"; // Prints detected type and path
 }
 ```
 
-### Compress a single file
+#### Compress a single file
 
 ```cpp
 #include <RarLib/Rar.hpp>
@@ -159,16 +183,14 @@ int main()
 {
     Rar rar;
 
-    bool ok = rar.compressOneFile("path/to/file.txt", "archive.rar");
-
-    if (!ok)
+    if (!rar.compressOneFile("path/to/file.txt", "archive.rar"))
         std::cerr << "Compression failed.\n";
     else
         std::cout << "archive.rar created successfully.\n";
 }
 ```
 
-### Compress multiple files
+#### Compress multiple files
 
 ```cpp
 #include <RarLib/Rar.hpp>
@@ -186,16 +208,14 @@ int main()
         "path/to/image.png"
     };
 
-    bool ok = rar.compressMultipleFiles(files, "archive.rar");
-
-    if (!ok)
+    if (!rar.compressMultipleFiles(files, "archive.rar"))
         std::cerr << "Compression failed.\n";
     else
         std::cout << "archive.rar created successfully.\n";
 }
 ```
 
-### Compress an entire directory
+#### Compress an entire directory
 
 ```cpp
 #include <RarLib/Rar.hpp>
@@ -205,9 +225,7 @@ int main()
 {
     Rar rar;
 
-    bool ok = rar.compressDirectory("path/to/my_folder", "backup.rar");
-
-    if (!ok)
+    if (!rar.compressDirectory("path/to/my_folder", "backup.rar"))
         std::cerr << "Compression failed.\n";
     else
         std::cout << "backup.rar created successfully.\n";
@@ -216,9 +234,112 @@ int main()
 
 ---
 
+### Extraction
+
+The `Unrar` class wraps `unrar` when available, and falls back to `rar` / `WinRAR` automatically.
+
+#### Check if unrar is available
+
+```cpp
+#include <RarLib/Unrar.hpp>
+#include <iostream>
+
+int main()
+{
+    Unrar unrar;
+
+    if (!unrar.isUnrarInstalled())
+        std::cerr << "unrar not found. Falling back to rar / WinRAR if available.\n";
+
+    std::cout << unrar << "\n"; // Prints detected executables and their paths
+}
+```
+
+#### Extract an entire archive
+
+```cpp
+#include <RarLib/Unrar.hpp>
+#include <iostream>
+
+int main()
+{
+    Unrar unrar;
+
+    // Extract to a specific directory
+    if (!unrar.extractArchive("archive.rar", "path/to/output"))
+        std::cerr << "Extraction failed.\n";
+    else
+        std::cout << "Extracted successfully.\n";
+
+    // Extract to the current working directory
+    if (!unrar.extractArchive("archive.rar"))
+        std::cerr << "Extraction failed.\n";
+}
+```
+
+#### Extract a single file
+
+```cpp
+#include <RarLib/Unrar.hpp>
+#include <iostream>
+
+int main()
+{
+    Unrar unrar;
+
+    // The second argument is the path of the file inside the archive
+    if (!unrar.extractOneFile("archive.rar", "docs/readme.txt", "path/to/output"))
+        std::cerr << "Extraction failed.\n";
+    else
+        std::cout << "File extracted successfully.\n";
+}
+```
+
+---
+
+### Inspection
+
+#### List archive contents
+
+Prints the archive content (filenames, sizes, dates) directly to stdout.
+
+```cpp
+#include <RarLib/Unrar.hpp>
+#include <iostream>
+
+int main()
+{
+    Unrar unrar;
+
+    if (!unrar.listArchive("archive.rar"))
+        std::cerr << "Failed to list archive contents.\n";
+}
+```
+
+#### Test archive integrity
+
+Verifies the CRC checksums of every file in the archive. Returns `true` if the archive is intact.
+
+```cpp
+#include <RarLib/Unrar.hpp>
+#include <iostream>
+
+int main()
+{
+    Unrar unrar;
+
+    if (!unrar.testArchive("archive.rar"))
+        std::cerr << "Archive is corrupted or could not be tested.\n";
+    else
+        std::cout << "Archive integrity OK.\n";
+}
+```
+
+---
+
 ## Roadmap
 
-- [ ] Extraction / decompression support (`unrar`)
+- [x] Extraction / decompression support (`unrar`)
 - [ ] Password-protected archives
 - [ ] Compression level control (`-m0` to `-m5`)
 - [ ] Split archives (`-v` flag)
