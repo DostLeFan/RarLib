@@ -119,7 +119,7 @@ include(FetchContent)
 
 FetchContent_Declare(
     RarLib
-    GIT_REPOSITORY https://github.com/YOUR_USERNAME/RarLib.git
+    GIT_REPOSITORY https://github.com/DostLeFan/RarLib.git
     GIT_TAG        v2.0.0
 )
 
