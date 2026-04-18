@@ -8,7 +8,7 @@
 		#define WINDOWS
 	#endif
 #elif defined(__unix__) || defined(__unix) || defined(_POSIX_VERSION) \
-	  (defined(__APPLE__) && defined(__MACH__)) || defined(macintosh) || defined(Macintosh) \
+	  || (defined(__APPLE__) && defined(__MACH__)) || defined(macintosh) || defined(Macintosh) \
 	  || defined(__linux__) || defined(__gnu_linux__) \
 	  || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) \
 	  || defined(_AIX) || defined(__hpux) || defined(__sun) \

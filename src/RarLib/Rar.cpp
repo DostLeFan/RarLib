@@ -10,6 +10,8 @@
 #elif defined(UNIX)
 	#include <unistd.h>
 	char const PATH_SEPARATOR = ':';
+#else
+	char const PATH_SEPARATOR = ':'; // Fallback.
 #endif
 
 namespace fs = std::filesystem;
