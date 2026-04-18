@@ -84,7 +84,7 @@ Wrapper        (base class — detection, command execution, shared helpers)
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/RarLib.git
+git clone https://github.com/DostLeFan/RarLib.git
 cd RarLib
 
 # Configure
