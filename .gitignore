@@ -1,0 +1,27 @@
+# Directories
+
+_deps/
+CMakeFiles/
+.vs/
+ALL_BUILD.dir/
+Debug/
+RarLib.dir/
+INSTALL.dir/
+x64/
+ZERO_CHECK.dir/
+logs/
+destination/
+states/
+
+# Files
+
+cmake_install.cmake
+CMakeCache.txt
+Makefile
+RarLib
+*.filters
+*.user
+*.vcxproj
+*.slnx
+*.sln
+*.exe
