@@ -1,6 +1,5 @@
 #include "../../include/RarLib/Rar.hpp"
 
-#include <iostream>
 #include <sstream>
 #include <cstdlib>
 #include "../../include/RarLib/OS.hpp"
@@ -17,20 +16,29 @@ namespace fs = std::filesystem;
 
 Rar::Rar() {}
 
-Rar::Rar(Rar const& src) {}
+Rar::Rar(Rar const& src) : m_cachedRar(src.m_cachedRar), m_rarCached(src.m_rarCached) {}
 
 Rar::~Rar() {}
 
 
 Rar& Rar::operator=(Rar const& src)
 {
+	if(this != &src)
+	{
+		m_cachedRar = src.m_cachedRar;
+		m_rarCached = src.m_rarCached;
+	}
+	
 	return *this;
 }
 
 
 bool Rar::compressOneFile(std::string const& filePath, std::string const& archiveName) const
 {
-	RarDetectionResult rar = findRarExecutable();
+	if(containsUnsafeChars(filePath) || containsUnsafeChars(archiveName))
+		return false;
+	
+	RarDetectionResult const& rar = findRarExecutable();
 	
 	if(!rar.found)
 		return false;
@@ -51,7 +59,10 @@ bool Rar::compressOneFile(std::string const& filePath, std::string const& archiv
 
 bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::string const& archiveName) const
 {
-	RarDetectionResult rar = findRarExecutable();
+	if(containsUnsafeChars(archiveName))
+		return false;
+	
+	RarDetectionResult const& rar = findRarExecutable();
 	
 	if(!rar.found)
 		return false;
@@ -67,14 +78,22 @@ bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::stri
 	#endif
 	
 	for(std::string const& f : files)
+	{
+		if(containsUnsafeChars(f))
+			return false;
+		
 		ossCmd << " \"" << fs::absolute(f).string() << "\"";
+	}
 	
 	return executeCommandSafe(ossCmd.str());
 }
 
 bool Rar::compressDirectory(std::string const& directoryPath, std::string const& archiveName) const
 {
-	RarDetectionResult rar = findRarExecutable();
+	if(containsUnsafeChars(directoryPath) || containsUnsafeChars(archiveName))
+		return false;
+	
+	RarDetectionResult const& rar = findRarExecutable();
 	
 	if(!rar.found)
 		return false;
@@ -114,7 +133,6 @@ fs::path Rar::resolveArchivePath(std::string const& archiveName) const
 
 bool Rar::executeCommandSafe(std::string const& command) const
 {
-	std::cout << "Command to execute : " << command << std::endl;
 	#if !defined(WINDOWS) && !defined(UNIX)
 		return false;
 	#elif defined(WINDOWS)
@@ -161,14 +179,17 @@ bool Rar::executeCommandSafe(std::string const& command) const
 
 RarDetectionResult Rar::findRarExecutable() const
 {
-	RarDetectionResult result;
+	if(m_rarCached)
+		return m_cachedRar;
 	
-result.found = false;
-	result.type = RarType::EMPTY;
-	result.path = "";
+	m_rarCached = true;
+	
+	m_cachedRar.found = false;
+	m_cachedRar.type = RarType::EMPTY;
+	m_cachedRar.path = "";
 	
 	#if !defined(WINDOWS) && !defined(UNIX)
-		return result;
+		return m_cachedRar;
 	#elif defined(WINDOWS)
 		HKEY hKey;
 		char const* subkey = "SOFTWARE\\WinRAR";
@@ -182,11 +203,11 @@ result.found = false;
 			{
 				RegCloseKey(hKey);
 				
-				result.found = true;
-				result.type = RarType::WINRAR;
-				result.path = fs::path(pathBuffer);
+				m_cachedRar.found = true;
+				m_cachedRar.type = RarType::WINRAR;
+				m_cachedRar.path = fs::path(pathBuffer);
 				
-				return result;
+				return m_cachedRar;
 			}
 			
 			RegCloseKey(hKey);
@@ -201,11 +222,11 @@ result.found = false;
 		{
 			if(fileExists(p))
 			{
-				result.found = true;
-				result.type = RarType::WINRAR;
-				result.path = fs::path(p);
+				m_cachedRar.found = true;
+				m_cachedRar.type = RarType::WINRAR;
+				m_cachedRar.path = fs::path(p);
 				
-				return result;
+				return m_cachedRar;
 			}
 		}
 	#endif
@@ -224,11 +245,11 @@ result.found = false;
 			
 			if(fileExists(dir / "rar"))
 			{
-				result.found = true;
-				result.type = RarType::RAR;
-				result.path = dir / "rar";
+				m_cachedRar.found = true;
+				m_cachedRar.type = RarType::RAR;
+				m_cachedRar.path = dir / "rar";
 				
-				return result;
+				return m_cachedRar;
 			}
 			
 			start = end + 1;
@@ -238,15 +259,15 @@ result.found = false;
 		
 		if(fileExists(lastDir / "rar"))
 		{
-			result.found = true;
-			result.type = RarType::RAR;
-			result.path = lastDir / "rar";
+			m_cachedRar.found = true;
+			m_cachedRar.type = RarType::RAR;
+			m_cachedRar.path = lastDir / "rar";
 			
-			return result;
+			return m_cachedRar;
 		}
 	}
 	
-	return result;
+	return m_cachedRar;
 }
 
 bool Rar::fileExists(fs::path const& path) const
@@ -258,6 +279,13 @@ bool Rar::fileExists(fs::path const& path) const
 	#else
 		return false;
 	#endif
+}
+
+bool Rar::containsUnsafeChars(std::string const& str) const
+{
+	static std::string const unsafe = "\"';|&`$<>(){}\\!#~";
+	
+	return str.find_first_of(unsafe) != std::string::npos;
 }
 
 

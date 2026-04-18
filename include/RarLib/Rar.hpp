@@ -40,10 +40,14 @@ class Rar
 		friend std::ostream& operator<<(std::ostream& os, Rar const& src);
 	
 	private:
+		mutable RarDetectionResult m_cachedRar;
+		mutable bool m_rarCached = false;
+		
 		std::filesystem::path resolveArchivePath(std::string const& archiveName) const;
 		bool executeCommandSafe(std::string const& command) const;
 		RarDetectionResult findRarExecutable() const;
 		bool fileExists(std::filesystem::path const& path) const;
+		bool containsUnsafeChars(std::string const& str) const;
 	
 	protected:
 		virtual void write(std::ostream& os) const;
