@@ -49,13 +49,13 @@ bool Unrar::extractArchive(std::string const& archivePath, std::string const& ou
 	// Flag '-o+' overwrites existing files without prompting (WinRAR / rar).
 	// unrar uses the same flags.
 	#if defined(WINDOWS)
-		ossCmd << "\"" << extractor.path.string() << "\" x -o+ \""
-			   << archiveAbs.string() << "\" \""
-			   << outputDir.string() << "\\\"";
+		ossCmd << "\"" << extractor.path.u8string() << "\" x -o+ \""
+			   << archiveAbs.u8string() << "\" \""
+			   << outputDir.u8string() << "\\\"";
 	#else
 		ossCmd << extractor.path << " x -o+ \""
-			   << archiveAbs.string() << "\" \""
-			   << outputDir.string() << "/\"";
+			   << archiveAbs.u8string() << "\" \""
+			   << outputDir.u8string() << "/\"";
 	#endif
 	
 	return executeCommandSafe(ossCmd.str());
@@ -83,15 +83,15 @@ bool Unrar::extractOneFile(std::string const& archivePath, std::string const& fi
 	// Flag 'e' extracts without recreating the directory structure.
 	// The specific file to extract is passed as the third argument.
 	#if defined(WINDOWS)
-		ossCmd << "\"" << extractor.path.string() << "\" e -o+ \""
-			   << archiveAbs.string() << "\" \""
+		ossCmd << "\"" << extractor.path.u8string() << "\" e -o+ \""
+			   << archiveAbs.u8string() << "\" \""
 			   << fileInArchive << "\" \""
-			   << outputDir.string() << "\\\"";
+			   << outputDir.u8string() << "\\\"";
 	#else
 		ossCmd << extractor.path << " e -o+ \""
-			   << archiveAbs.string() << "\" \""
+			   << archiveAbs.u8string() << "\" \""
 			   << fileInArchive << "\" \""
-			   << outputDir.string() << "/\"";
+			   << outputDir.u8string() << "/\"";
 	#endif
 	
 	return executeCommandSafe(ossCmd.str());
@@ -116,9 +116,9 @@ bool Unrar::listArchive(std::string const& archivePath, bool checkUnsafeChars) c
 	
 	// Flag 'l' lists archive contents with technical details (size, date, attributes).
 	#if defined(WINDOWS)
-		ossCmd << "\"" << extractor.path.string() << "\" l \"" << archiveAbs.string() << "\"";
+		ossCmd << "\"" << extractor.path.u8string() << "\" l \"" << archiveAbs.u8string() << "\"";
 	#else
-		ossCmd << extractor.path << " l \"" << archiveAbs.string() << "\"";
+		ossCmd << extractor.path << " l \"" << archiveAbs.u8string() << "\"";
 	#endif
 	
 	// Output must be visible to the caller — use executeCommandWithOutput instead of executeCommandSafe.
@@ -144,9 +144,9 @@ bool Unrar::testArchive(std::string const& archivePath, bool checkUnsafeChars) c
 	
 	// Flag 't' tests the archive integrity (CRC checks on every file).
 	#if defined(WINDOWS)
-		ossCmd << "\"" << extractor.path.string() << "\" t \"" << archiveAbs.string() << "\"";
+		ossCmd << "\"" << extractor.path.u8string() << "\" t \"" << archiveAbs.u8string() << "\"";
 	#else
-		ossCmd << extractor.path << " t \"" << archiveAbs.string() << "\"";
+		ossCmd << extractor.path << " t \"" << archiveAbs.u8string() << "\"";
 	#endif
 	
 	return executeCommandSafe(ossCmd.str());

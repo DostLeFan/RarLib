@@ -19,19 +19,44 @@
 
 namespace fs = std::filesystem;
 
+#if defined(WINDOWS)
+	[[nodiscard]] std::string WideStringToUTF8(std::wstring const& wstr)
+	{
+		if(wstr.empty())
+			return {};
+		
+		int const sizeNeeded = WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), nullptr, 0, nullptr, nullptr);
+		
+		if(sizeNeeded <= 0)
+			return {};
+		
+		std::string result(sizeNeeded, '\0');
+		
+		WideCharToMultiByte(CP_UTF8, 0, wstr.data(), static_cast<int>(wstr.size()), result.data(), sizeNeeded, nullptr, nullptr);
+		
+		return result;
+	}
+#else
+	#include <locale>
+	#include <codecvt>
+	
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+	
+	[[nodiscard]] std::string WideStringToUTF8(std::wstring const& wstr)
+	{
+		using convertType = std::codecvt_utf8<wchar_t>;
+		std::wstring_convert<convertType, wchar_t> converter;
+		
+		return converter.to_bytes(wstr);
+	}
+	
+	#pragma GCC diagnostic pop
+#endif
+
 std::string wstrToStr(std::wstring const& wstr)
 {
-	size_t len = wcstombs(nullptr, wstr.c_str(), 0) + 1;
-	char* buffer = new char[len];
-	
-	wcstombs(buffer, wstr.c_str(), len);
-	
-	std::string str(buffer);
-	
-	delete[] buffer;
-	buffer = nullptr;
-	
-	return str;
+	return WideStringToUTF8(wstr);
 }
 
 Wrapper::Wrapper() {}
@@ -75,7 +100,7 @@ void Wrapper::write(std::ostream& os) const
 	{
 		os << "rar / WinRAR found.\n"
 		   << "  Type : " << (rar.type == RarType::RAR ? "rar" : "WinRAR") << "\n"
-		   << "  Path : " << rar.path.string() << (unrar.found ? "\n" : "");
+		   << "  Path : " << rar.path.u8string() << (unrar.found ? "\n" : "");
 	}
 	else
 		os << "rar / WinRAR : not found." << (unrar.found ? "\n" : "");
@@ -84,7 +109,7 @@ void Wrapper::write(std::ostream& os) const
 	{
 		os << "unrar found.\n"
 		   << "  Type : unrar\n"
-		   << "  Path : " << unrar.path.string();
+		   << "  Path : " << unrar.path.u8string();
 	}
 	else
 		os << "unrar : not found.";
@@ -190,7 +215,7 @@ bool Wrapper::executeCommandWithOutput(std::wstring const& command) const
 bool Wrapper::fileExists(std::filesystem::path const& path) const
 {
 	#if defined(WINDOWS)
-		return fs::exists(path) || fs::exists(fs::u8path(path.string() + ".exe"));
+		return fs::exists(path) || fs::exists(fs::u8path(path.u8string() + ".exe"));
 	#elif defined(UNIX)
 		return fs::exists(path) && access(path.c_str(), X_OK) == 0;
 	#else

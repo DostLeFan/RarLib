@@ -44,7 +44,7 @@ bool Rar::compressOneFile(std::string const& filePath, std::string const& archiv
 	#else
 		std::ostringstream ossCmd;
 		
-		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\" \"" << inputPath.string() << "\"";
+		ossCmd << rar.path << " a -r \"" << archivePath.u8string() << "\" \"" << inputPath.u8string() << "\"";
 		
 		return executeCommandSafe(ossCmd.str());
 	#endif
@@ -79,14 +79,14 @@ bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::stri
 	#else
 		std::ostringstream ossCmd;
 		
-		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\"";
+		ossCmd << rar.path << " a -r \"" << archivePath.u8string() << "\"";
 		
 		for(std::string const& f : files)
 		{
 			if(containsUnsafeChars(f))
 				return false;
 			
-			ossCmd << " \"" << fs::absolute(fs::u8path(f)).string() << "\"";
+			ossCmd << " \"" << fs::absolute(fs::u8path(f)).u8string() << "\"";
 		}
 		
 		return executeCommandSafe(ossCmd.str());
@@ -118,7 +118,7 @@ bool Rar::compressDirectory(std::string const& directoryPath, std::string const&
 	#else
 		std::ostringstream ossCmd;
 		
-		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\" \"" << dirPath.string() << "/*\"";
+		ossCmd << rar.path << " a -r \"" << archivePath.u8string() << "\" \"" << dirPath.u8string() << "/*\"";
 		
 		return executeCommandSafe(ossCmd.str());
 	#endif
