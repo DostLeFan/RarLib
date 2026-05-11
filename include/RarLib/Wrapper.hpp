@@ -22,6 +22,8 @@ struct RarDetectionResult
 
 typedef struct RarDetectionResult RarDetectionResult;
 
+std::string wstrToStr(std::wstring const& wstr);
+
 class Wrapper
 {
 	public:
@@ -42,7 +44,9 @@ class Wrapper
 		
 		std::filesystem::path resolveArchivePath(std::string const& archiveName) const;
 		bool executeCommandSafe(std::string const& command) const;
+		bool executeCommandSafe(std::wstring const& command) const;
 		bool executeCommandWithOutput(std::string const& command) const;
+		bool executeCommandWithOutput(std::wstring const& command) const;
 		bool fileExists(std::filesystem::path const& path) const;
 		bool containsUnsafeChars(std::string const& str) const;
 		RarDetectionResult findRarExecutable() const;

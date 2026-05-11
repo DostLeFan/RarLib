@@ -8,6 +8,7 @@
 
 #if defined(WINDOWS)
 	#include <windows.h>
+	#include <process.h>
 	char const PATH_SEPARATOR = ';';
 #elif defined(UNIX)
 	#include <unistd.h>
@@ -17,6 +18,21 @@
 #endif
 
 namespace fs = std::filesystem;
+
+std::string wstrToStr(std::wstring const& wstr)
+{
+	size_t len = wcstombs(nullptr, wstr.c_str(), 0) + 1;
+	char* buffer = new char[len];
+	
+	wcstombs(buffer, wstr.c_str(), len);
+	
+	std::string str(buffer);
+	
+	delete[] buffer;
+	buffer = nullptr;
+	
+	return str;
+}
 
 Wrapper::Wrapper() {}
 
@@ -134,6 +150,19 @@ bool Wrapper::executeCommandSafe(std::string const& command) const
 	#endif
 }
 
+bool Wrapper::executeCommandSafe(std::wstring const& command) const
+{
+	#if defined(WINDOWS)
+		std::wostringstream wossCmd;
+		
+		wossCmd << "cmd /C \"" << command << " >nul 2>nul\"";
+		
+		return _wsystem(wossCmd.str().c_str()) == 0;
+	#else
+		return executeCommandSafe(wstrToStr(command));
+	#endif
+}
+
 bool Wrapper::executeCommandWithOutput(std::string const& command) const
 {
 	// Preserves stdout — suitable for listArchive() where the caller needs to see the output.
@@ -142,6 +171,19 @@ bool Wrapper::executeCommandWithOutput(std::string const& command) const
 		return false;
 	#else
 		return std::system(command.c_str()) == 0;
+	#endif
+}
+
+bool Wrapper::executeCommandWithOutput(std::wstring const& command) const
+{
+	// Preserves stdout — suitable for listArchive() where the caller needs to see the output.
+	#if !defined(WINDOWS) && !defined(UNIX)
+		(void)command;
+		return false;
+	#elif defined(WINDOWS)
+		return _wsystem(command.c_str()) == 0;
+	#else
+		return std::system(wstrT(command).c_str()) == 0;
 	#endif
 }
 

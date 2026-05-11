@@ -35,15 +35,19 @@ bool Rar::compressOneFile(std::string const& filePath, std::string const& archiv
 	fs::path archivePath = resolveArchivePath(archiveName);
 	fs::path inputPath = fs::absolute(fs::u8path(filePath));
 	
-	std::ostringstream ossCmd;
-	
 	#if defined(WINDOWS)
-		ossCmd << "\"" << rar.path.string() << "\" a -r \"" << archivePath.string() << "\" \"" << inputPath.string() << "\"";
+		std::wostringstream wossCmd;
+		
+		wossCmd << "\"" << rar.path.wstring() << "\" a -r \"" << archivePath.wstring() << "\" \"" << inputPath.wstring() << "\"";
+		
+		return executeCommandSafe(wossCmd.str());
 	#else
+		std::ostringstream ossCmd;
+		
 		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\" \"" << inputPath.string() << "\"";
+		
+		return executeCommandSafe(ossCmd.str());
 	#endif
-	
-	return executeCommandSafe(ossCmd.str());
 }
 
 bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::string const& archiveName) const
@@ -58,23 +62,35 @@ bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::stri
 	
 	fs::path archivePath = resolveArchivePath(archiveName);
 	
-	std::ostringstream ossCmd;
-	
 	#if defined(WINDOWS)
-		ossCmd << "\"" << rar.path.string() << "\" a -r \"" << archivePath.string() << "\"";
-	#else
-		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\"";
-	#endif
-	
-	for(std::string const& f : files)
-	{
-		if(containsUnsafeChars(f))
-			return false;
+		std::wostringstream wossCmd;
 		
-		ossCmd << " \"" << fs::absolute(f).string() << "\"";
-	}
-	
-	return executeCommandSafe(ossCmd.str());
+		wossCmd << "\"" << rar.path.wstring() << "\" a -r \"" << archivePath.wstring() << "\"";
+		
+		for(std::string const& f : files)
+		{
+			if(containsUnsafeChars(f))
+				return false;
+			
+			wossCmd << " \"" << fs::absolute(fs::u8path(f)).wstring() << "\"";
+		}
+		
+		return executeCommandSafe(wossCmd.str());
+	#else
+		std::ostringstream ossCmd;
+		
+		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\"";
+		
+		for(std::string const& f : files)
+		{
+			if(containsUnsafeChars(f))
+				return false;
+			
+			ossCmd << " \"" << fs::absolute(fs::u8path(f)).string() << "\"";
+		}
+		
+		return executeCommandSafe(ossCmd.str());
+	#endif
 }
 
 bool Rar::compressDirectory(std::string const& directoryPath, std::string const& archiveName, bool checkUnsafeChars) const
@@ -93,13 +109,17 @@ bool Rar::compressDirectory(std::string const& directoryPath, std::string const&
 	fs::path archivePath = resolveArchivePath(archiveName);
 	fs::path dirPath = fs::absolute(fs::u8path(directoryPath));
 	
-	std::ostringstream ossCmd;
-	
 	#if defined(WINDOWS)
-		ossCmd << "\"" << rar.path.string() << "\" a -r \"" << archivePath.string() << "\" \"" << dirPath.string() << "\\*\"";
+		std::wostringstream wossCmd;
+		
+		wossCmd << "\"" << rar.path.wstring() << "\" a -r \"" << archivePath.wstring() << "\" \"" << dirPath.wstring() << "\\*\"";
+		
+		return executeCommandSafe(wossCmd.str());
 	#else
+		std::ostringstream ossCmd;
+		
 		ossCmd << rar.path << " a -r \"" << archivePath.string() << "\" \"" << dirPath.string() << "/*\"";
+		
+		return executeCommandSafe(ossCmd.str());
 	#endif
-	
-	return executeCommandSafe(ossCmd.str());
 }
