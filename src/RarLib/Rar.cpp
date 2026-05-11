@@ -19,10 +19,13 @@ Rar& Rar::operator=(Rar const& src)
 }
 
 
-bool Rar::compressOneFile(std::string const& filePath, std::string const& archiveName) const
+bool Rar::compressOneFile(std::string const& filePath, std::string const& archiveName, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(filePath) || containsUnsafeChars(archiveName))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(filePath) || containsUnsafeChars(archiveName))
+			return false;
+	}
 	
 	RarDetectionResult const& rar = findRarExecutable();
 	
@@ -30,7 +33,7 @@ bool Rar::compressOneFile(std::string const& filePath, std::string const& archiv
 		return false;
 	
 	fs::path archivePath = resolveArchivePath(archiveName);
-	fs::path inputPath = fs::absolute(filePath);
+	fs::path inputPath = fs::absolute(fs::u8path(filePath));
 	
 	std::ostringstream ossCmd;
 	
@@ -74,10 +77,13 @@ bool Rar::compressMultipleFiles(std::vector<std::string> const& files, std::stri
 	return executeCommandSafe(ossCmd.str());
 }
 
-bool Rar::compressDirectory(std::string const& directoryPath, std::string const& archiveName) const
+bool Rar::compressDirectory(std::string const& directoryPath, std::string const& archiveName, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(directoryPath) || containsUnsafeChars(archiveName))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(directoryPath) || containsUnsafeChars(archiveName))
+			return false;
+	}
 	
 	RarDetectionResult const& rar = findRarExecutable();
 	
@@ -85,7 +91,7 @@ bool Rar::compressDirectory(std::string const& directoryPath, std::string const&
 		return false;
 	
 	fs::path archivePath = resolveArchivePath(archiveName);
-	fs::path dirPath = fs::absolute(directoryPath);
+	fs::path dirPath = fs::absolute(fs::u8path(directoryPath));
 	
 	std::ostringstream ossCmd;
 	

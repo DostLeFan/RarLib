@@ -15,9 +15,9 @@ class Rar : public Wrapper
 		
 		inline bool isRarInstalled() const { return findRarExecutable().found; }
 		
-		bool compressOneFile(std::string const& filePath, std::string const& archiveName) const;
+		bool compressOneFile(std::string const& filePath, std::string const& archiveName, bool checkUnsafeChars = true) const;
 		bool compressMultipleFiles(std::vector<std::string> const& files, std::string const& archiveName) const;
-		bool compressDirectory(std::string const& directoryPath, std::string const& archiveName) const;
+		bool compressDirectory(std::string const& directoryPath, std::string const& archiveName, bool checkUnsafeChars = true) const;
 };
 
 #endif // DEF_RAR

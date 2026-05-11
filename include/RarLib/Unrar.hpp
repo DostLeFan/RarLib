@@ -15,10 +15,10 @@ class Unrar : public Wrapper
 		
 		inline bool isUnrarInstalled() const { return findUnrarExecutable().found; }
 		
-		bool extractArchive(std::string const& archivePath, std::string const& outputPath = "") const;
-		bool extractOneFile(std::string const& archivePath, std::string const& fileInArchive, std::string const& outputPath = "") const;
-		bool listArchive(std::string const& archivePath) const;
-		bool testArchive(std::string const& archivePath) const;
+		bool extractArchive(std::string const& archivePath, std::string const& outputPath = "", bool checkUnsafeChars = true) const;
+		bool extractOneFile(std::string const& archivePath, std::string const& fileInArchive, std::string const& outputPath = "", bool checkUnsafeChars = true) const;
+		bool listArchive(std::string const& archivePath, bool checkUnsafeChars = true) const;
+		bool testArchive(std::string const& archivePath, bool checkUnsafeChars = true) const;
 	
 	private:
 		mutable RarDetectionResult m_cachedUnrar;

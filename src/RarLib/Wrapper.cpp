@@ -77,12 +77,12 @@ void Wrapper::write(std::ostream& os) const
 
 std::filesystem::path Wrapper::resolveArchivePath(std::string const& archiveName) const
 {
-	fs::path archivePath(archiveName);
+	fs::path archivePath = fs::u8path(archiveName);
 	
 	if(archivePath.is_absolute())
 		return archivePath;
-	else
-		return fs::current_path() / archivePath;
+	
+	return fs::current_path() / archivePath;
 }
 
 bool Wrapper::executeCommandSafe(std::string const& command) const
@@ -148,7 +148,7 @@ bool Wrapper::executeCommandWithOutput(std::string const& command) const
 bool Wrapper::fileExists(std::filesystem::path const& path) const
 {
 	#if defined(WINDOWS)
-		return fs::exists(path) || fs::exists(path.string() + ".exe");
+		return fs::exists(path) || fs::exists(fs::u8path(path.string() + ".exe"));
 	#elif defined(UNIX)
 		return fs::exists(path) && access(path.c_str(), X_OK) == 0;
 	#else
@@ -192,7 +192,7 @@ RarDetectionResult Wrapper::findRarExecutable() const
 				
 				m_cachedRar.found = true;
 				m_cachedRar.type  = RarType::WINRAR;
-				m_cachedRar.path  = fs::path(pathBuffer);
+				m_cachedRar.path  = fs::u8path(pathBuffer);
 				
 				return m_cachedRar;
 			}
@@ -211,7 +211,7 @@ RarDetectionResult Wrapper::findRarExecutable() const
 			{
 				m_cachedRar.found = true;
 				m_cachedRar.type  = RarType::WINRAR;
-				m_cachedRar.path  = fs::path(p);
+				m_cachedRar.path  = fs::u8path(p);
 				
 				return m_cachedRar;
 			}
@@ -228,7 +228,7 @@ RarDetectionResult Wrapper::findRarExecutable() const
 		
 		while((end = pathEnv.find(PATH_SEPARATOR, start)) != std::string::npos)
 		{
-			fs::path dir = pathEnv.substr(start, end - start);
+			fs::path dir = fs::u8path(pathEnv.substr(start, end - start));
 			
 			if(fileExists(dir / "rar"))
 			{
@@ -242,7 +242,7 @@ RarDetectionResult Wrapper::findRarExecutable() const
 			start = end + 1;
 		}
 		
-		fs::path lastDir = pathEnv.substr(start);
+		fs::path lastDir = fs::u8path(pathEnv.substr(start));
 		
 		if(fileExists(lastDir / "rar"))
 		{
@@ -296,7 +296,7 @@ RarDetectionResult Wrapper::findUnrarExecutable() const
 		
 		while((end = pathEnv.find(PATH_SEPARATOR, start)) != std::string::npos)
 		{
-			fs::path dir = pathEnv.substr(start, end - start);
+			fs::path dir = fs::u8path(pathEnv.substr(start, end - start));
 			
 			if(fileExists(dir / "unrar"))
 			{
@@ -310,7 +310,7 @@ RarDetectionResult Wrapper::findUnrarExecutable() const
 			start = end + 1;
 		}
 		
-		fs::path lastDir = pathEnv.substr(start);
+		fs::path lastDir = fs::u8path(pathEnv.substr(start));
 		
 		if(fileExists(lastDir / "unrar"))
 		{

@@ -25,20 +25,23 @@ Unrar& Unrar::operator=(Unrar const& src)
 }
 
 
-bool Unrar::extractArchive(std::string const& archivePath, std::string const& outputPath) const
+bool Unrar::extractArchive(std::string const& archivePath, std::string const& outputPath, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(archivePath) || containsUnsafeChars(outputPath))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(archivePath) || containsUnsafeChars(outputPath))
+			return false;
+	}
 	
 	RarDetectionResult const& extractor = findExtractionExecutable();
 	
 	if(!extractor.found)
 		return false;
 	
-	fs::path archiveAbs = fs::absolute(archivePath);
+	fs::path archiveAbs = fs::absolute(fs::u8path(archivePath));
 	
 	// Resolve output directory — default to current working directory
-	fs::path outputDir = outputPath.empty() ? fs::current_path() : fs::absolute(outputPath);
+	fs::path outputDir = outputPath.empty() ? fs::current_path() : fs::absolute(fs::u8path(outputPath));
 	
 	std::ostringstream ossCmd;
 	
@@ -58,19 +61,22 @@ bool Unrar::extractArchive(std::string const& archivePath, std::string const& ou
 	return executeCommandSafe(ossCmd.str());
 }
 
-bool Unrar::extractOneFile(std::string const& archivePath, std::string const& fileInArchive, std::string const& outputPath) const
+bool Unrar::extractOneFile(std::string const& archivePath, std::string const& fileInArchive, std::string const& outputPath, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(archivePath) || containsUnsafeChars(fileInArchive) || containsUnsafeChars(outputPath))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(archivePath) || containsUnsafeChars(fileInArchive) || containsUnsafeChars(outputPath))
+			return false;
+	}
 	
 	RarDetectionResult const& extractor = findExtractionExecutable();
 	
 	if(!extractor.found)
 		return false;
 	
-	fs::path archiveAbs = fs::absolute(archivePath);
+	fs::path archiveAbs = fs::absolute(fs::u8path(archivePath));
 	
-	fs::path outputDir = outputPath.empty() ? fs::current_path() : fs::absolute(outputPath);
+	fs::path outputDir = outputPath.empty() ? fs::current_path() : fs::absolute(fs::u8path(outputPath));
 	
 	std::ostringstream ossCmd;
 	
@@ -91,17 +97,20 @@ bool Unrar::extractOneFile(std::string const& archivePath, std::string const& fi
 	return executeCommandSafe(ossCmd.str());
 }
 
-bool Unrar::listArchive(std::string const& archivePath) const
+bool Unrar::listArchive(std::string const& archivePath, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(archivePath))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(archivePath))
+			return false;
+	}
 	
 	RarDetectionResult const& extractor = findExtractionExecutable();
 	
 	if(!extractor.found)
 		return false;
 	
-	fs::path archiveAbs = fs::absolute(archivePath);
+	fs::path archiveAbs = fs::absolute(fs::u8path(archivePath));
 	
 	std::ostringstream ossCmd;
 	
@@ -116,17 +125,20 @@ bool Unrar::listArchive(std::string const& archivePath) const
 	return executeCommandWithOutput(ossCmd.str());
 }
 
-bool Unrar::testArchive(std::string const& archivePath) const
+bool Unrar::testArchive(std::string const& archivePath, bool checkUnsafeChars) const
 {
-	if(containsUnsafeChars(archivePath))
-		return false;
+	if(checkUnsafeChars)
+	{
+		if(containsUnsafeChars(archivePath))
+			return false;
+	}
 	
 	RarDetectionResult const& extractor = findExtractionExecutable();
 	
 	if(!extractor.found)
 		return false;
 	
-	fs::path archiveAbs = fs::absolute(archivePath);
+	fs::path archiveAbs = fs::absolute(fs::u8path(archivePath));
 	
 	std::ostringstream ossCmd;
 	
