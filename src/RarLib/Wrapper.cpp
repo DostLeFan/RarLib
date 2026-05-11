@@ -183,7 +183,7 @@ bool Wrapper::executeCommandWithOutput(std::wstring const& command) const
 	#elif defined(WINDOWS)
 		return _wsystem(command.c_str()) == 0;
 	#else
-		return std::system(wstrT(command).c_str()) == 0;
+		return std::system(wstrToStr(command).c_str()) == 0;
 	#endif
 }
 
